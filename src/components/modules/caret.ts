@@ -3,6 +3,7 @@ import Module from '../__module';
 import type Block from '../block';
 import * as caretUtils from '../utils/caret';
 import $  from '../dom';
+import * as shadow from '../shadow-dom';
 
 /**
  * Caret
@@ -60,7 +61,7 @@ export default class Caret extends Module {
       /**
        * Hide current cursor
        */
-      window.getSelection()?.removeAllRanges();
+      shadow.getSelection()?.removeAllRanges();
 
       /**
        * Highlight Block

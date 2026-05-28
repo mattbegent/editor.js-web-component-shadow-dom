@@ -11,6 +11,7 @@ import { SearchInput, SearchInputEvent } from './components/search-input';
 import { cacheable } from '../../utils';
 import { PopoverItemDefault } from './components/popover-item';
 import { PopoverItemHtml } from './components/popover-item/popover-item-html/popover-item-html';
+import * as shadow from '../../shadow-dom';
 
 /**
  * Desktop popover.
@@ -344,7 +345,10 @@ export class PopoverDesktop extends PopoverAbstract {
 
     popoverClone.classList.add(css.popoverOpened);
     popoverClone.querySelector('.' + css.popoverNested)?.remove();
-    document.body.appendChild(popoverClone);
+
+    const measureContainer = shadow.getShadowRoot() || document.body;
+
+    measureContainer.appendChild(popoverClone);
 
     const container = popoverClone.querySelector('.' + css.popoverContainer) as HTMLElement;
 

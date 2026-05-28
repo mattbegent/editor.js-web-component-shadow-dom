@@ -10,6 +10,7 @@ import $ from '../dom';
 import SelectionUtils from '../selection';
 import Block from '../block';
 import * as _ from '../utils';
+import * as shadow from '../shadow-dom';
 
 /**
  *
@@ -116,7 +117,7 @@ export default class RectangleSelection extends Module {
    * @param {number} pageY - Y coord of mouse
    */
   public startSelection(pageX, pageY): void {
-    const elemWhereSelectionStart = document.elementFromPoint(pageX - window.pageXOffset, pageY - window.pageYOffset);
+    const elemWhereSelectionStart = shadow.elementFromPoint(pageX - window.pageXOffset, pageY - window.pageYOffset);
 
     /**
      * Don't clear selected block by clicks on the Block settings
@@ -185,14 +186,16 @@ export default class RectangleSelection extends Module {
       this.processMouseDown(mouseEvent);
     }, false);
 
-    this.listeners.on(document.body, 'mousemove', _.throttle((mouseEvent: MouseEvent) => {
+    const eventRoot = shadow.getScopeElement(this.Editor.UI.nodes.wrapper as HTMLElement) || document.body;
+
+    this.listeners.on(eventRoot, 'mousemove', _.throttle((mouseEvent: MouseEvent) => {
       this.processMouseMove(mouseEvent);
     // eslint-disable-next-line @typescript-eslint/no-magic-numbers
     }, 10), {
       passive: true,
     });
 
-    this.listeners.on(document.body, 'mouseleave', () => {
+    this.listeners.on(eventRoot, 'mouseleave', () => {
       this.processMouseLeave();
     });
 
@@ -203,7 +206,7 @@ export default class RectangleSelection extends Module {
       passive: true,
     });
 
-    this.listeners.on(document.body, 'mouseup', () => {
+    this.listeners.on(eventRoot, 'mouseup', () => {
       this.processMouseUp();
     }, false);
   }
@@ -438,10 +441,10 @@ export default class RectangleSelection extends Module {
    * @returns {object} index - index next Block, leftPos - start of left border of Block, rightPos - right border
    */
   private genInfoForMouseSelection(): {index: number; leftPos: number; rightPos: number} {
-    const widthOfRedactor = document.body.offsetWidth;
+    const widthOfRedactor = this.Editor.UI.nodes.wrapper.offsetWidth || document.body.offsetWidth;
     const centerOfRedactor = widthOfRedactor / 2;
     const Y = this.mouseY - window.pageYOffset;
-    const elementUnderMouse = document.elementFromPoint(centerOfRedactor, Y);
+    const elementUnderMouse = shadow.elementFromPoint(centerOfRedactor, Y);
     const blockInCurrentPos = this.Editor.BlockManager.getBlockByChildNode(elementUnderMouse);
     let index;
 

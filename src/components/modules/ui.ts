@@ -17,6 +17,7 @@ import styles from '../../styles/main.css?inline';
 import { BlockHovered } from '../events/BlockHovered';
 import { selectionChangeDebounceTimeout } from '../constants';
 import { EditorMobileLayoutToggled } from '../events';
+import * as shadow from '../shadow-dom';
 /**
  * HTML Elements used for UI
  */
@@ -321,39 +322,68 @@ export default class UI extends Module<UINodes> {
     const styleTagId = 'editor-js-styles';
 
     /**
-     * Do not append styles again if they are already on the page
+     * For shadow DOM, always inject styles into the shadow root.
+     * For regular DOM, check if styles already exist on the page.
      */
-    if ($.get(styleTagId)) {
-      return;
+    const shadowRoot = this.config.shadowRoot;
+
+    if (shadowRoot) {
+      /**
+       * Check if styles already exist in shadow root
+       */
+      if (shadowRoot.querySelector(`#${styleTagId}`)) {
+        return;
+      }
+
+      const tag = $.make('style', null, {
+        id: styleTagId,
+        textContent: styles.toString(),
+      });
+
+      if (this.config.style && !_.isEmpty(this.config.style) && this.config.style.nonce) {
+        tag.setAttribute('nonce', this.config.style.nonce);
+      }
+
+      shadowRoot.prepend(tag);
+    } else {
+      /**
+       * Do not append styles again if they are already on the page
+       */
+      if ($.get(styleTagId)) {
+        return;
+      }
+
+      /**
+       * Make tag
+       */
+      const tag = $.make('style', null, {
+        id: styleTagId,
+        textContent: styles.toString(),
+      });
+
+      /**
+       * If user enabled Content Security Policy, he can pass nonce through the config
+       *
+       * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/nonce
+       */
+      if (this.config.style && !_.isEmpty(this.config.style) && this.config.style.nonce) {
+        tag.setAttribute('nonce', this.config.style.nonce);
+      }
+
+      /**
+       * Append styles at the top of HEAD tag
+       */
+      $.prepend(document.head, tag);
     }
-
-    /**
-     * Make tag
-     */
-    const tag = $.make('style', null, {
-      id: styleTagId,
-      textContent: styles.toString(),
-    });
-
-    /**
-     * If user enabled Content Security Policy, he can pass nonce through the config
-     *
-     * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes/nonce
-     */
-    if (this.config.style && !_.isEmpty(this.config.style) && this.config.style.nonce) {
-      tag.setAttribute('nonce', this.config.style.nonce);
-    }
-
-    /**
-     * Append styles at the top of HEAD tag
-     */
-    $.prepend(document.head, tag);
   }
 
   /**
    * Adds listeners that should work both in read-only and read-write modes
    */
   private bindReadOnlyInsensitiveListeners(): void {
+    /**
+     * selectionchange always fires on document, even for selections inside shadow DOM
+     */
     this.listeners.on(document, 'selectionchange', this.selectionChangeDebounced);
 
     this.listeners.on(window, 'resize', this.resizeDebouncer, {
@@ -390,11 +420,11 @@ export default class UI extends Module<UINodes> {
       this.redactorClicked(event);
     }, false);
 
-    this.readOnlyMutableListeners.on(document, 'keydown', (event: KeyboardEvent) => {
+    this.readOnlyMutableListeners.on(shadow.getDocumentEventTarget(), 'keydown', (event: KeyboardEvent) => {
       this.documentKeydown(event);
     }, true);
 
-    this.readOnlyMutableListeners.on(document, 'mousedown', (event: MouseEvent) => {
+    this.readOnlyMutableListeners.on(shadow.getDocumentEventTarget(), 'mousedown', (event: MouseEvent) => {
       this.documentClicked(event);
     }, true);
 
@@ -727,7 +757,7 @@ export default class UI extends Module<UINodes> {
       const clientX = event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX;
       const clientY = event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY;
 
-      clickedNode = document.elementFromPoint(clientX, clientY) as HTMLElement;
+      clickedNode = shadow.elementFromPoint(clientX, clientY) as HTMLElement;
     }
 
     /**

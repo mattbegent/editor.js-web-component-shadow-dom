@@ -2,6 +2,7 @@ import Module from '../__module';
 import type Block from '../block';
 import SelectionUtils from '../selection';
 import * as _ from '../utils';
+import * as shadow from '../shadow-dom';
 
 /**
  *
@@ -23,7 +24,7 @@ export default class CrossBlockSelection extends Module {
    * @returns {Promise}
    */
   public async prepare(): Promise<void> {
-    this.listeners.on(document, 'mousedown', (event: MouseEvent) => {
+    this.listeners.on(shadow.getDocumentEventTarget(), 'mousedown', (event: MouseEvent) => {
       this.enableCrossBlockSelection(event);
     });
   }
@@ -43,8 +44,8 @@ export default class CrossBlockSelection extends Module {
     this.firstSelectedBlock = BlockManager.getBlock(event.target as HTMLElement);
     this.lastSelectedBlock = this.firstSelectedBlock;
 
-    this.listeners.on(document, 'mouseover', this.onMouseOver);
-    this.listeners.on(document, 'mouseup', this.onMouseUp);
+    this.listeners.on(shadow.getDocumentEventTarget(), 'mouseover', this.onMouseOver);
+    this.listeners.on(shadow.getDocumentEventTarget(), 'mouseup', this.onMouseUp);
   }
 
   /**
@@ -169,8 +170,8 @@ export default class CrossBlockSelection extends Module {
    * Removes the listeners
    */
   private onMouseUp = (): void => {
-    this.listeners.off(document, 'mouseover', this.onMouseOver);
-    this.listeners.off(document, 'mouseup', this.onMouseUp);
+    this.listeners.off(shadow.getDocumentEventTarget(), 'mouseover', this.onMouseOver);
+    this.listeners.off(shadow.getDocumentEventTarget(), 'mouseup', this.onMouseUp);
   };
 
   /**

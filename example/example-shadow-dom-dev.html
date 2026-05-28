@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editor.js Shadow DOM Test (Dev Mode)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .test-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .test-section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .test-section h2 {
+      margin-top: 0;
+      color: #555;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .test-result {
+      padding: 8px 12px;
+      margin: 5px 0;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .test-pass {
+      background: #d4edda;
+      color: #155724;
+    }
+    .test-fail {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    .test-pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+    #output {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 10px;
+      max-height: 300px;
+      overflow: auto;
+      font-family: monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .editor-host {
+      border: 2px dashed #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      min-height: 200px;
+      margin: 10px 0;
+    }
+    .instructions {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .instructions ul {
+      margin: 5px 0;
+      padding-left: 20px;
+    }
+
+    /* These aggressive styles intentionally attempt to affect the editor */
+    .editor-host div {
+      border: none !important;
+    }
+    p {
+      font-size: 40px !important;
+      color: red !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Editor.js Shadow DOM Test Page</h1>
+  <p style="text-align:center; font-size: 14px !important; color: #666 !important;">
+    This page tests that Editor.js works fully inside a Web Component's Shadow DOM.<br>
+    The aggressive red/40px styles on this page should NOT affect the editors below.
+  </p>
+
+  <div class="test-container">
+    <!-- Test 1: Basic Initialization -->
+    <div class="test-section">
+      <h2>Test 1: Basic Initialization in Shadow DOM</h2>
+      <div id="editor-host-1" class="editor-host"></div>
+      <div id="test1-result" class="test-result test-pending">Pending...</div>
+    </div>
+
+    <!-- Test 2: Text Editing & Selection -->
+    <div class="test-section">
+      <h2>Test 2: Text Editing & Selection</h2>
+      <div class="instructions">
+        <strong>Manual verification:</strong>
+        <ul>
+          <li>Click in the editor and type some text</li>
+          <li>Select text with mouse drag - should highlight correctly</li>
+          <li>Double-click a word - should select the word</li>
+          <li>Use Ctrl+A (Cmd+A) - should select all text in the block</li>
+        </ul>
+      </div>
+      <button id="test2-btn">Mark Test 2 as Passed</button>
+      <div id="test2-result" class="test-result test-pending">Pending - interact with editor to verify</div>
+    </div>
+
+    <!-- Test 3: Toolbar & Toolbox -->
+    <div class="test-section">
+      <h2>Test 3: Toolbar & Toolbox</h2>
+      <div class="instructions">
+        <strong>Manual verification:</strong>
+        <ul>
+          <li>Click on an empty line - the "+" toolbox button should appear</li>
+          <li>Click "+" - the toolbox popup should appear with tool options</li>
+          <li>Hover over a block - the drag handle should appear on the left</li>
+        </ul>
+      </div>
+      <button id="test3-btn">Mark Test 3 as Passed</button>
+      <div id="test3-result" class="test-result test-pending">Pending - interact with editor to verify</div>
+    </div>
+
+    <!-- Test 4: Inline Toolbar (Bold/Italic/Link) -->
+    <div class="test-section">
+      <h2>Test 4: Inline Toolbar (Bold, Italic, Link)</h2>
+      <div class="instructions">
+        <strong>Manual verification:</strong>
+        <ul>
+          <li>Type some text, then select a portion of it</li>
+          <li>The inline toolbar should appear above the selection</li>
+          <li>Click Bold (B) - text should become bold</li>
+          <li>Click Italic (I) - text should become italic</li>
+          <li>Click Link icon - should show link input field</li>
+        </ul>
+      </div>
+      <button id="test4-btn">Mark Test 4 as Passed</button>
+      <div id="test4-result" class="test-result test-pending">Pending - select text to verify inline toolbar</div>
+    </div>
+
+    <!-- Test 5: Multiple Blocks & Enter Key -->
+    <div class="test-section">
+      <h2>Test 5: Multiple Blocks & Enter Key</h2>
+      <div class="instructions">
+        <strong>Manual verification:</strong>
+        <ul>
+          <li>Press Enter at end of a paragraph - new empty block should be created</li>
+          <li>Press Backspace on an empty block - block should be removed</li>
+          <li>Use the toolbox to add different block types</li>
+        </ul>
+      </div>
+      <button id="test5-btn">Mark Test 5 as Passed</button>
+      <div id="test5-result" class="test-result test-pending">Pending - press Enter/Backspace to verify</div>
+    </div>
+
+    <!-- Test 6: Pre-loaded Content -->
+    <div class="test-section">
+      <h2>Test 6: Pre-loaded Content (Second Instance)</h2>
+      <div id="editor-host-2" class="editor-host"></div>
+      <div id="test6-result" class="test-result test-pending">Pending...</div>
+    </div>
+
+    <!-- Test 7: Save Output -->
+    <div class="test-section">
+      <h2>Test 7: Save Output</h2>
+      <button id="save-btn">Save Editor 1 Content</button>
+      <button id="save-btn-2">Save Editor 2 Content</button>
+      <pre id="output"></pre>
+      <div id="test7-result" class="test-result test-pending">Click Save to test</div>
+    </div>
+
+    <!-- Test 8: Style Encapsulation -->
+    <div class="test-section">
+      <h2>Test 8: Style Encapsulation</h2>
+      <div id="test8-result" class="test-result test-pending">Pending...</div>
+    </div>
+
+    <!-- Automated Test Results -->
+    <div class="test-section">
+      <h2>Automated Test Summary</h2>
+      <div id="automated-results"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import EditorJS from '/src/codex.ts';
+
+    /**
+     * Utility to log test results
+     */
+    function logResult(elementId, passed, message) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.className = 'test-result ' + (passed ? 'test-pass' : 'test-fail');
+        el.textContent = (passed ? '\u2713 PASS: ' : '\u2717 FAIL: ') + message;
+      }
+    }
+
+    function addAutomatedResult(passed, message) {
+      const container = document.getElementById('automated-results');
+      const div = document.createElement('div');
+      div.className = 'test-result ' + (passed ? 'test-pass' : 'test-fail');
+      div.textContent = (passed ? '\u2713 ' : '\u2717 ') + message;
+      container.appendChild(div);
+    }
+
+    /**
+     * Test 1: Initialize Editor.js in Shadow DOM
+     */
+    async function runTest1() {
+      const host = document.getElementById('editor-host-1');
+      const shadowRoot = host.attachShadow({ mode: 'open' });
+
+      const holder = document.createElement('div');
+      holder.id = 'editorjs-holder-1';
+      shadowRoot.appendChild(holder);
+
+      try {
+        const editor = new EditorJS({
+          holder: holder,
+          shadowRoot: shadowRoot,
+          placeholder: 'Type here to test text editing, selection, toolbar, and inline tools...',
+          data: {
+            blocks: [
+              {
+                type: 'paragraph',
+                data: {
+                  text: 'This editor is running <b>inside a Shadow DOM</b>! Try selecting this text to see the inline toolbar.'
+                }
+              },
+              {
+                type: 'paragraph',
+                data: {
+                  text: 'Press Enter to create new blocks. Try the toolbar on the left (+).'
+                }
+              }
+            ]
+          },
+          onReady: () => {
+            logResult('test1-result', true, 'Editor.js initialized successfully inside Shadow DOM');
+
+            // Verify styles are in shadow root
+            const styleEl = shadowRoot.querySelector('#editor-js-styles');
+            addAutomatedResult(!!styleEl, styleEl ? 'Styles injected into Shadow Root' : 'Styles NOT found in Shadow Root');
+
+            // Verify editor wrapper exists inside shadow root
+            const wrapper = shadowRoot.querySelector('.codex-editor');
+            addAutomatedResult(!!wrapper, wrapper ? 'Editor wrapper found in Shadow Root' : 'Editor wrapper NOT found');
+
+            // Verify styles are NOT in document.head
+            const docStyle = document.head.querySelector('#editor-js-styles');
+            addAutomatedResult(!docStyle, !docStyle ? 'Styles correctly NOT leaked to document.head' : 'Styles LEAKED to document.head');
+
+            // Check redactor zone
+            const redactor = shadowRoot.querySelector('.codex-editor__redactor');
+            addAutomatedResult(!!redactor, redactor ? 'Redactor zone rendered' : 'Redactor zone NOT found');
+
+            // Check blocks rendered
+            const blocks = shadowRoot.querySelectorAll('.ce-block');
+            addAutomatedResult(blocks.length === 2, `Blocks rendered: ${blocks.length} (expected 2)`);
+
+            // Check paragraph text
+            const paragraph = shadowRoot.querySelector('.ce-paragraph');
+            const hasText = paragraph && paragraph.textContent.includes('inside a Shadow DOM');
+            addAutomatedResult(hasText, hasText ? 'Pre-loaded text rendered correctly' : 'Pre-loaded text NOT found');
+
+            window._editor1 = editor;
+          }
+        });
+      } catch (e) {
+        logResult('test1-result', false, 'Editor.js failed to initialize: ' + e.message);
+        addAutomatedResult(false, 'Initialization error: ' + e.message);
+      }
+    }
+
+    /**
+     * Test 6: Pre-loaded content in second independent editor instance
+     */
+    async function runTest6() {
+      const host = document.getElementById('editor-host-2');
+      const shadowRoot = host.attachShadow({ mode: 'open' });
+
+      const holder = document.createElement('div');
+      holder.id = 'editorjs-holder-2';
+      shadowRoot.appendChild(holder);
+
+      try {
+        const editor = new EditorJS({
+          holder: holder,
+          shadowRoot: shadowRoot,
+          data: {
+            blocks: [
+              {
+                type: 'paragraph',
+                data: { text: '<b>Bold text</b> and <i>italic text</i> should render correctly.' }
+              },
+              {
+                type: 'paragraph',
+                data: { text: 'Second paragraph with a <a href="https://example.com">link</a>.' }
+              },
+              {
+                type: 'paragraph',
+                data: { text: 'Third paragraph - try pressing Enter to create a new block.' }
+              }
+            ]
+          },
+          onReady: () => {
+            logResult('test6-result', true, 'Second editor initialized successfully');
+
+            const blocks = shadowRoot.querySelectorAll('.ce-block');
+            addAutomatedResult(blocks.length === 3, `Second editor blocks: ${blocks.length} (expected 3)`);
+
+            const bold = shadowRoot.querySelector('.ce-paragraph b');
+            const italic = shadowRoot.querySelector('.ce-paragraph i');
+            addAutomatedResult(bold && italic, (bold && italic) ? 'Inline formatting rendered' : 'Inline formatting NOT rendered');
+
+            const link = shadowRoot.querySelector('.ce-paragraph a');
+            addAutomatedResult(link && link.getAttribute('href') === 'https://example.com',
+              link ? 'Links rendered correctly' : 'Links NOT rendered');
+
+            window._editor2 = editor;
+          }
+        });
+      } catch (e) {
+        logResult('test6-result', false, 'Second editor failed: ' + e.message);
+      }
+    }
+
+    /**
+     * Test 8: Style encapsulation
+     */
+    function runTest8() {
+      setTimeout(() => {
+        const host = document.getElementById('editor-host-1');
+        const shadowRoot = host.shadowRoot;
+        if (!shadowRoot) {
+          logResult('test8-result', false, 'Shadow root not found');
+          return;
+        }
+
+        const paragraph = shadowRoot.querySelector('.ce-paragraph');
+        if (!paragraph) {
+          logResult('test8-result', false, 'Paragraph not found in shadow DOM');
+          return;
+        }
+
+        const computedStyle = window.getComputedStyle(paragraph);
+        const fontSize = computedStyle.fontSize;
+
+        // The aggressive 40px font-size from host page should NOT leak in
+        const isFontSizeLeaked = (fontSize === '40px');
+
+        if (!isFontSizeLeaked) {
+          logResult('test8-result', true, `Host page styles do NOT leak into Shadow DOM (font-size: ${fontSize})`);
+          addAutomatedResult(true, 'Style encapsulation working correctly');
+        } else {
+          logResult('test8-result', false, `Style leakage detected! fontSize=${fontSize}`);
+          addAutomatedResult(false, 'Style encapsulation broken');
+        }
+      }, 1500);
+    }
+
+    /**
+     * Save button handlers
+     */
+    document.getElementById('save-btn').addEventListener('click', async () => {
+      const outputEl = document.getElementById('output');
+      try {
+        if (window._editor1) {
+          const data = await window._editor1.save();
+          outputEl.textContent = JSON.stringify(data, null, 2);
+          logResult('test7-result', true, 'Save produced valid JSON output');
+          addAutomatedResult(true, 'Editor.save() works from Shadow DOM');
+        }
+      } catch (e) {
+        document.getElementById('output').textContent = 'Error: ' + e.message;
+        logResult('test7-result', false, 'Save failed: ' + e.message);
+      }
+    });
+
+    document.getElementById('save-btn-2').addEventListener('click', async () => {
+      const outputEl = document.getElementById('output');
+      try {
+        if (window._editor2) {
+          const data = await window._editor2.save();
+          outputEl.textContent = JSON.stringify(data, null, 2);
+          logResult('test7-result', true, 'Save produced valid JSON output (editor 2)');
+        }
+      } catch (e) {
+        document.getElementById('output').textContent = 'Error: ' + e.message;
+        logResult('test7-result', false, 'Save failed: ' + e.message);
+      }
+    });
+
+    // Manual test buttons
+    document.getElementById('test2-btn').addEventListener('click', () => {
+      logResult('test2-result', true, 'Text editing & selection confirmed working');
+    });
+    document.getElementById('test3-btn').addEventListener('click', () => {
+      logResult('test3-result', true, 'Toolbar & toolbox confirmed working');
+    });
+    document.getElementById('test4-btn').addEventListener('click', () => {
+      logResult('test4-result', true, 'Inline toolbar confirmed working');
+    });
+    document.getElementById('test5-btn').addEventListener('click', () => {
+      logResult('test5-result', true, 'Multiple blocks & Enter key confirmed working');
+    });
+
+    // Run all automated tests
+    await runTest1();
+    await runTest6();
+    runTest8();
+  </script>
+</body>
+</html>
