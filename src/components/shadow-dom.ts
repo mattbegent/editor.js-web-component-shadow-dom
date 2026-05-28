@@ -130,9 +130,10 @@ function getActiveShadowRoot(): ShadowRoot | null {
     const inner = el.shadowRoot.activeElement;
 
     if (inner) {
-      return el.shadowRoot;
+      el = inner;
+    } else {
+      break;
     }
-    break;
   }
 
   // If we couldn't find it via activeElement traversal, fall back to the global

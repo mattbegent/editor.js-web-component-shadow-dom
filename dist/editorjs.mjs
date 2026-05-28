@@ -99,9 +99,11 @@ function z() {
 function ni() {
   let n = document.activeElement;
   for (; n && n.shadowRoot; ) {
-    if (n.shadowRoot.activeElement)
-      return n.shadowRoot;
-    break;
+    const e = n.shadowRoot.activeElement;
+    if (e)
+      n = e;
+    else
+      break;
   }
   return Z;
 }
