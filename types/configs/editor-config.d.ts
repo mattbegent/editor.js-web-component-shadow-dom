@@ -115,4 +115,12 @@ export interface EditorConfig {
      */
     nonce?: string;
   }
+
+  /**
+   * Shadow Root to use for DOM queries and style injection.
+   * When provided, Editor.js will work inside a Shadow DOM.
+   * Styles will be injected into the shadow root instead of document.head,
+   * and DOM queries/selection will be scoped to the shadow root.
+   */
+  shadowRoot?: ShadowRoot;
 }

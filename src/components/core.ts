@@ -3,6 +3,7 @@ import * as _ from './utils';
 import type { EditorConfig, SanitizerConfig } from '../../types';
 import type { EditorModules } from '../types-internal/editor-modules';
 import I18n from './i18n';
+import { setShadowRoot } from './shadow-dom';
 import { CriticalError } from './errors/critical';
 import EventsDispatcher from './utils/events';
 import Modules from './modules';
@@ -116,6 +117,13 @@ export default class Core {
      */
     if (this.config.holder == null) {
       this.config.holder = 'editorjs';
+    }
+
+    /**
+     * Set up Shadow DOM context if provided
+     */
+    if (this.config.shadowRoot) {
+      setShadowRoot(this.config.shadowRoot);
     }
 
     if (!this.config.logLevel) {

@@ -4,6 +4,7 @@
 
 import { nanoid } from 'nanoid';
 import Dom from './dom';
+import * as shadow from './shadow-dom';
 
 /**
  * Possible log levels
@@ -514,18 +515,21 @@ export function copyTextToClipboard(text): void {
     innerHTML: text,
   });
 
-  document.body.appendChild(el);
+  const root = shadow.getShadowRoot();
+  const container = root || document.body;
 
-  const selection = window.getSelection();
+  container.appendChild(el);
+
+  const selection = shadow.getSelection();
   const range = document.createRange();
 
   range.selectNode(el);
 
-  window.getSelection().removeAllRanges();
+  shadow.getSelection().removeAllRanges();
   selection.addRange(range);
 
   document.execCommand('copy');
-  document.body.removeChild(el);
+  container.removeChild(el);
 }
 
 /**

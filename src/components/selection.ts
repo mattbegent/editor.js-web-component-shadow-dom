@@ -3,6 +3,7 @@
  */
 import * as _ from './utils';
 import $ from './dom';
+import * as shadow from './shadow-dom';
 
 interface TextRange {
   boundingTop: number;
@@ -80,7 +81,7 @@ export default class SelectionUtils {
    * @returns {Node|null}
    */
   public static get anchorNode(): Node | null {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     return selection ? selection.anchorNode : null;
   }
@@ -91,7 +92,7 @@ export default class SelectionUtils {
    * @returns {Element|null}
    */
   public static get anchorElement(): Element | null {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     if (!selection) {
       return null;
@@ -117,7 +118,7 @@ export default class SelectionUtils {
    * @returns {number|null}
    */
   public static get anchorOffset(): number | null {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     return selection ? selection.anchorOffset : null;
   }
@@ -128,7 +129,7 @@ export default class SelectionUtils {
    * @returns {boolean|null}
    */
   public static get isCollapsed(): boolean | null {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     return selection ? selection.isCollapsed : null;
   }
@@ -255,13 +256,13 @@ export default class SelectionUtils {
       return rect;
     }
 
-    if (!window.getSelection) {
+    if (!shadow.getSelection) {
       _.log('Method window.getSelection is not supported', 'warn');
 
       return rect;
     }
 
-    sel = window.getSelection();
+    sel = shadow.getSelection();
 
     if (sel.rangeCount === null || isNaN(sel.rangeCount)) {
       _.log('Method SelectionUtils.rangeCount is not supported', 'warn');
@@ -307,7 +308,9 @@ export default class SelectionUtils {
    * @returns {string}
    */
   public static get text(): string {
-    return window.getSelection ? window.getSelection().toString() : '';
+    const selection = shadow.getSelection();
+
+    return selection ? selection.toString() : '';
   }
 
   /**
@@ -317,7 +320,7 @@ export default class SelectionUtils {
    * @returns {Selection}
    */
   public static get(): Selection | null  {
-    return window.getSelection();
+    return shadow.getSelection();
   }
 
   /**
@@ -328,7 +331,7 @@ export default class SelectionUtils {
    */
   public static setCursor(element: HTMLElement, offset = 0): DOMRect {
     const range = document.createRange();
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     /** if found deepest node is native input */
     if ($.isNativeInput(element)) {
@@ -444,7 +447,7 @@ export default class SelectionUtils {
       return;
     }
 
-    const sel = window.getSelection();
+    const sel = shadow.getSelection();
 
     sel.removeAllRanges();
     sel.addRange(this.savedSelectionRange);
@@ -461,7 +464,7 @@ export default class SelectionUtils {
    * Collapse current selection
    */
   public collapseToEnd(): void {
-    const sel = window.getSelection();
+    const sel = shadow.getSelection();
     const range = document.createRange();
 
     range.selectNodeContents(sel.focusNode);
@@ -479,7 +482,7 @@ export default class SelectionUtils {
    * @returns {HTMLElement|null}
    */
   public findParentTag(tagName: string, className?: string, searchDepth = 10): HTMLElement | null {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
     let parentTag = null;
 
     /**
@@ -552,7 +555,7 @@ export default class SelectionUtils {
    * @param {HTMLElement} element - element which contents should be selected
    */
   public expandToTag(element: HTMLElement): void {
-    const selection = window.getSelection();
+    const selection = shadow.getSelection();
 
     selection.removeAllRanges();
     const range = document.createRange();

@@ -1,4 +1,5 @@
 import $, { isCollapsedWhitespaces } from '../dom';
+import * as shadow from '../shadow-dom';
 
 /**
  * Returns TextNode containing a caret and a caret offset in it
@@ -8,7 +9,7 @@ import $, { isCollapsedWhitespaces } from '../dom';
  * returns child node with focusOffset index as a new focusNode
  */
 export function getCaretNodeAndOffset(): [ Node | null, number ] {
-  const selection = window.getSelection();
+  const selection = shadow.getSelection();
 
   if (selection === null) {
     return [null, 0];

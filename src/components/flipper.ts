@@ -1,5 +1,6 @@
 import DomIterator from './domIterator';
 import * as _ from './utils';
+import * as shadow from './shadow-dom';
 
 /**
  * Flipper construction options
@@ -123,7 +124,7 @@ export default class Flipper {
      * - prevents plugins inner keydown handlers from being called while keyboard navigation
      * - otherwise this handler will be called at the moment it is attached which causes false flipper firing (see https://techread.me/js-addeventlistener-fires-for-past-events/)
      */
-    document.addEventListener('keydown', this.onKeyDown, true);
+    (shadow.getDocumentEventTarget() as EventTarget).addEventListener('keydown', this.onKeyDown, true);
   }
 
   /**
@@ -133,7 +134,7 @@ export default class Flipper {
     this.activated = false;
     this.dropCursor();
 
-    document.removeEventListener('keydown', this.onKeyDown);
+    (shadow.getDocumentEventTarget() as EventTarget).removeEventListener('keydown', this.onKeyDown);
   }
 
   /**

@@ -1,4 +1,5 @@
 import * as _ from './utils';
+import * as shadow from './shadow-dom';
 
 /**
  * DOM manipulations helper
@@ -160,7 +161,7 @@ export default class Dom {
    * @returns {HTMLElement | null}
    */
   public static get(id: string): HTMLElement | null {
-    return document.getElementById(id);
+    return shadow.getElementById(id);
   }
 
   /**
@@ -550,7 +551,7 @@ export default class Dom {
    */
   public static getHolder(element: string | HTMLElement): HTMLElement {
     if (_.isString(element)) {
-      return document.getElementById(element);
+      return shadow.getElementById(element);
     }
 
     return element;
