@@ -24,6 +24,10 @@ let currentShadowRoot: ShadowRoot | null = null;
  */
 export function setShadowRoot(shadowRoot: ShadowRoot | null): void {
   currentShadowRoot = shadowRoot;
+
+  if (shadowRoot) {
+    patchGlobalSelectionForShadowDom();
+  }
 }
 
 /**
@@ -107,7 +111,7 @@ export function getSelection(): Selection | null {
      * not just `currentShadowRoot`, because with multiple editors the global may point
      * to a different shadow root.
      */
-    const activeShadowRoot = getActiveShadowRoot();
+    const activeShadowRoot = getFocusedShadowRoot() || currentShadowRoot;
 
     if (activeShadowRoot && typeof (activeShadowRoot as any).getSelection === 'function') {
       return (activeShadowRoot as any).getSelection();
@@ -120,24 +124,72 @@ export function getSelection(): Selection | null {
 }
 
 /**
- * Find the shadow root that contains the currently focused element.
- * Traverses activeElement chain to find the deepest shadow root with focus.
+ * Find the deepest shadow root that contains the currently focused element.
+ * Traverses the activeElement chain through nested shadow roots.
+ *
+ * @returns the deepest focused ShadowRoot, or null if focus is not inside a shadow tree
  */
-function getActiveShadowRoot(): ShadowRoot | null {
+function getFocusedShadowRoot(): ShadowRoot | null {
   let el = document.activeElement;
+  let deepestShadowRoot: ShadowRoot | null = null;
 
   while (el && el.shadowRoot) {
+    deepestShadowRoot = el.shadowRoot;
+
     const inner = el.shadowRoot.activeElement;
 
-    if (inner) {
-      el = inner;
-    } else {
+    if (!inner) {
       break;
     }
+
+    el = inner;
   }
 
-  // If we couldn't find it via activeElement traversal, fall back to the global
-  return currentShadowRoot;
+  return deepestShadowRoot;
+}
+
+/**
+ * Whether the global Selection API (window.getSelection / document.getSelection)
+ * has already been patched for shadow DOM support.
+ */
+let isGlobalSelectionPatched = false;
+
+/**
+ * Patches the global `window.getSelection` and `Document.prototype.getSelection`
+ * so that third-party tools (which are not aware of Editor.js's shadow DOM support
+ * and call the native Selection API directly) still get a Selection whose
+ * anchorNode/focusNode point at the real focused node instead of being retargeted
+ * to the shadow host.
+ *
+ * Without this, tools like @editorjs/list read `window.getSelection().anchorNode`
+ * to find the current list item; inside a Shadow DOM that node gets retargeted to
+ * the shadow host element, so the lookup fails silently (e.g. Enter does nothing).
+ *
+ * This is applied once per page, the first time an editor is initialized with a
+ * shadowRoot. It is a no-op whenever focus is outside of any shadow tree, so it is
+ * safe for the rest of the page.
+ */
+function patchGlobalSelectionForShadowDom(): void {
+  if (isGlobalSelectionPatched || typeof window === 'undefined') {
+    return;
+  }
+
+  isGlobalSelectionPatched = true;
+
+  const nativeDocumentGetSelection = document.getSelection.bind(document);
+
+  const getShadowAwareSelection = (): Selection | null => {
+    const focusedShadowRoot = getFocusedShadowRoot();
+
+    if (focusedShadowRoot && typeof (focusedShadowRoot as any).getSelection === 'function') {
+      return (focusedShadowRoot as any).getSelection();
+    }
+
+    return nativeDocumentGetSelection();
+  };
+
+  window.getSelection = getShadowAwareSelection;
+  Document.prototype.getSelection = getShadowAwareSelection;
 }
 
 /**

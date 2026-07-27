@@ -191,11 +191,29 @@
       <div id="test6-result" class="test-result test-pending">Pending...</div>
     </div>
 
+    <!-- Test 9: Lists -->
+    <div class="test-section">
+      <h2>Test 9: Lists (Ordered / Unordered)</h2>
+      <div id="editor-host-3" class="editor-host"></div>
+      <div class="instructions">
+        <strong>Manual verification:</strong>
+        <ul>
+          <li>Click at the end of a list item and press Enter - a new list item should be created</li>
+          <li>Press Enter on an empty list item - it should exit the list and create a paragraph block</li>
+          <li>Press Tab / Shift+Tab on a list item - it should indent / outdent</li>
+          <li>Press Backspace at the start of a list item - it should merge with the previous item</li>
+        </ul>
+      </div>
+      <button id="test9-btn">Mark Test 9 as Passed</button>
+      <div id="test9-result" class="test-result test-pending">Pending - press Enter/Tab/Backspace in the lists to verify</div>
+    </div>
+
     <!-- Test 7: Save Output -->
     <div class="test-section">
       <h2>Test 7: Save Output</h2>
       <button id="save-btn">Save Editor 1 Content</button>
       <button id="save-btn-2">Save Editor 2 Content</button>
+      <button id="save-btn-3">Save Editor 3 (Lists) Content</button>
       <pre id="output"></pre>
       <div id="test7-result" class="test-result test-pending">Click Save to test</div>
     </div>
@@ -215,6 +233,7 @@
 
   <script type="module">
     import EditorJS from '/src/codex.ts';
+    import List from '@editorjs/list';
 
     /**
      * Utility to log test results
@@ -358,6 +377,64 @@
     }
 
     /**
+     * Test 9: Lists inside Shadow DOM
+     */
+    async function runTest9() {
+      const host = document.getElementById('editor-host-3');
+      const shadowRoot = host.attachShadow({ mode: 'open' });
+
+      const holder = document.createElement('div');
+      holder.id = 'editorjs-holder-3';
+      shadowRoot.appendChild(holder);
+
+      try {
+        const editor = new EditorJS({
+          holder: holder,
+          shadowRoot: shadowRoot,
+          tools: {
+            list: {
+              class: List,
+              inlineToolbar: true,
+            },
+          },
+          data: {
+            blocks: [
+              {
+                type: 'list',
+                data: {
+                  style: 'unordered',
+                  items: [
+                    { content: 'First item - click at the end and press Enter', meta: {}, items: [] },
+                    { content: 'Second item', meta: {}, items: [] },
+                  ],
+                },
+              },
+              {
+                type: 'list',
+                data: {
+                  style: 'ordered',
+                  items: [
+                    { content: 'Ordered item one', meta: {}, items: [] },
+                    { content: 'Ordered item two', meta: {}, items: [] },
+                  ],
+                },
+              },
+            ],
+          },
+          onReady: () => {
+            const items = shadowRoot.querySelectorAll('.cdx-list__item');
+            addAutomatedResult(items.length === 4, `List items rendered: ${items.length} (expected 4)`);
+
+            window._editor3 = editor;
+            window._shadowRoot3 = shadowRoot;
+          },
+        });
+      } catch (e) {
+        logResult('test9-result', false, 'Lists editor failed: ' + e.message);
+      }
+    }
+
+    /**
      * Test 8: Style encapsulation
      */
     function runTest8() {
@@ -423,6 +500,20 @@
       }
     });
 
+    document.getElementById('save-btn-3').addEventListener('click', async () => {
+      const outputEl = document.getElementById('output');
+      try {
+        if (window._editor3) {
+          const data = await window._editor3.save();
+          outputEl.textContent = JSON.stringify(data, null, 2);
+          logResult('test7-result', true, 'Save produced valid JSON output (editor 3 - lists)');
+        }
+      } catch (e) {
+        document.getElementById('output').textContent = 'Error: ' + e.message;
+        logResult('test7-result', false, 'Save failed: ' + e.message);
+      }
+    });
+
     // Manual test buttons
     document.getElementById('test2-btn').addEventListener('click', () => {
       logResult('test2-result', true, 'Text editing & selection confirmed working');
@@ -436,10 +527,14 @@
     document.getElementById('test5-btn').addEventListener('click', () => {
       logResult('test5-result', true, 'Multiple blocks & Enter key confirmed working');
     });
+    document.getElementById('test9-btn').addEventListener('click', () => {
+      logResult('test9-result', true, 'Lists (Enter/Tab/Backspace) confirmed working');
+    });
 
     // Run all automated tests
     await runTest1();
     await runTest6();
+    await runTest9();
     runTest8();
   </script>
 </body>
